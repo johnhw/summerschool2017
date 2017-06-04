@@ -3,7 +3,7 @@ import numpy as np
 import scipy.linalg, scipy.stats
 
 class TKanvas(object):
-    def __init__(self, draw_fn=None, tick_fn=None, event_fn=None, quit_fn=None, w=400, h=400):
+    def __init__(self, draw_fn=None, tick_fn=None, event_fn=None, quit_fn=None, w=400, h=400, frame_time=20):
         self.root = Tk()
         self.canvas = Canvas(self.root, background = "black", width=w, height=h)
         self.w, self.h = w, h
@@ -27,15 +27,19 @@ class TKanvas(object):
         self.root.bind( "<Any-Button>", lambda ev: self.event("mousedown", ev))
         self.root.bind( "<Any-ButtonRelease>", lambda ev: self.event("mouseup", ev))
         self.root.bind( "<Any-Motion>", lambda ev: self.event("mousemotion", ev))        
-                        
+        self.frame_time = frame_time
         self.root.update()
-        self.root.after(10, self.update)
+        self.root.after(int(10), self.update)
         
        
     def quit(self, event):
         print("Exiting...")
         if self.quit_fn is not None:
-            self.quit_fn()
+            try:
+                self.quit_fn(self)
+            except:
+                print("Error in quit routine; exiting anyway")
+                
         self.root.destroy()
                 
     def clear(self):
@@ -53,6 +57,9 @@ class TKanvas(object):
         
         
         
+    def modify(self, item, **kw):
+        self.canvas.itemconfig(item, **kw)
+        
     def square(self, x, y, r, **kw):
         return self.rectangle(x-r, y-r, x+r, y+r, **kw)
         
@@ -69,7 +76,7 @@ class TKanvas(object):
         return self.canvas.create_oval( x1, y1, x2, y2, **kw)        
         
     def text(self, x1, y1, **kw ):
-        return self.canvas.create_text(x,y, **kw)        
+        return self.canvas.create_text(x1,y1, **kw)        
         
     def move_rel(self, tagOrId, dx,dy):
         print(tagOrId, dx, dy)
@@ -92,10 +99,10 @@ class TKanvas(object):
         if self.event_fn is not None:
             self.event_fn(self, event_type, event)    
     
-    def normal(self, mean, cov, ppfs=(0.65, 0.75, 0.85, 0.95), **kw):
+    def normal(self, mean, cov, ppfs=(0.65, 0.75, 0.85), **kw):
         for ppf in reversed(sorted(ppfs)):
             scale = scipy.stats.norm.ppf(ppf)
-            self.error_ellipse(mean, cov, scale=scale, **kw)        
+            self.error_ellipse(mean, cov, scale=scale, smooth=True, fill='', **kw)        
         
     def update(self):
         if self.draw_fn is not None:            
@@ -103,7 +110,7 @@ class TKanvas(object):
         self.root.update_idletasks()        
         if self.tick_fn is not None:            
             self.tick_fn(0.01)
-        self.root.after(20, self.update)
+        self.root.after(int(self.frame_time), self.update)
             
             
 ### Demo with mouse crosshairs
