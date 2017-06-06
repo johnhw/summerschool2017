@@ -1,14 +1,16 @@
 digraph G {
+category;
+dd;
+dd -> category  [label=p];
+precs;
+means;
 obs [style=filled];
 mean [shape=invtriangle];
 mean -> obs  [label=mu];
-category [style=filled];
 category -> mean  [label=category];
-means;
 means -> mean  [label=means];
 prec [shape=invtriangle];
 prec -> obs  [label=tau];
 category -> prec  [label=category];
-precs;
 precs -> prec  [label=precs];
 }
