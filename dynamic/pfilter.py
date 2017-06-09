@@ -125,10 +125,9 @@ class ParticleFilter(object):
             implies all particles will be resampled (i.e. a complete reset)
         """
         new_sample = self.prior(self.n_particles)
-            
         # resample from the prior
         if mask is None:
-            self.particles[:, :] = new_sample
+            self.particles = new_sample
         else:
             self.particles[mask,:] = new_sample[mask,:]
         
@@ -158,7 +157,7 @@ class ParticleFilter(object):
         else:
             # we have no observation, so all particles weighted the same
             weights = np.ones((self.n_particles,))
-        
+       
         # apply weighting based on the internal state
         if self.internal_weight_fn is not None:
             internal_weights = self.internal_weight_fn(self.particles, observed)            
@@ -172,6 +171,7 @@ class ParticleFilter(object):
         # resampling step
         indices = resample(self.weights)
         self.particles = self.particles[indices, :]
+        
         
         # mean hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
