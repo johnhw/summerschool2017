@@ -102,8 +102,8 @@ class ParticleFilter(object):
         
         """
         self.column_names = column_names
-        self.initial = initial
-        self.d = len(self.initial)
+        self.prior = initial
+        self.d = self.prior(n_particles).shape[1]
         self.n_particles = n_particles
         self.observe_fn = observe_fn
         self.dynamics_fn = dynamics_fn or no_dynamics
@@ -124,14 +124,13 @@ class ParticleFilter(object):
             boolean mask specifying the elements of the particle array to draw from the prior. None (default)
             implies all particles will be resampled (i.e. a complete reset)
         """
-        
+        new_sample = self.prior(self.n_particles)
+            
         # resample from the prior
         if mask is None:
-            for i,prior in enumerate(self.initial):
-                self.particles[:,i] = prior.rvs(self.n_particles)
+            self.particles[:, :] = new_sample
         else:
-            for i,prior in enumerate(self.initial):
-                self.particles[mask,i] = prior.rvs(self.n_particles)[mask]
+            self.particles[mask,:] = new_sample[mask,:]
         
     
     def update(self, observed=None):

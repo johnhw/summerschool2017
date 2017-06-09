@@ -1,7 +1,68 @@
 from Tkinter import *
 import numpy as np
 import json
+import pfilter
 
+from tkanvas import TKanvas 
+from collections import defaultdict
+
+class Recogniser(object):
+    def __init__(self, pfilter): 
+        self.screen_size = 500
+        c = TKanvas(draw_fn=self.draw, event_fn=self.event, quit_fn=self.quit, w=self.screen_size, h=self.screen_size)     
+        self.mouse = [0,0] # position of the mouse
+        self.pfilter = pfilter
+        self.pfilter.init_filter()
+        
+    def quit(self, src):
+        pass
+        
+    def event(self, src, event_type, event):
+        if event_type=='mousemotion':
+            self.mouse = (event.x, event.y)
+            
+            
+        
+    def draw(self, src):        
+    
+        src.clear()    
+        
+        colors = ["red", "blue", "yellow", "green", "orange", "cyan", "magenta"]
+        src.circle(self.mouse[0], self.mouse[1], 3, fill="grey")
+        
+        self.pfilter.update(np.array(self.mouse))
+        particles = self.pfilter.original_particles
+        observations = self.pfilter.hypotheses
+        weights = self.pfilter.weights
+        
+        classes = defaultdict(float)
+        for pos,particle,weight in zip(observations, particles, weights):
+            src.circle(pos[0], pos[1], 1+int(particle[5]*10), fill=colors[int(particle[0])])
+            if not np.isnan(weight):
+                classes[int(particle[0])] += weight
+        
+        x = 0
+        width = 50
+        #print(classes)
+        for i in range(len(colors)):
+            h = classes.get(i,0) * 50.0
+            src.rectangle(x, src.h-h, x+width, src.h, fill=colors[i]) 
+            x+=width
+            
+        
+
+def interactive_recogniser(dynamics, observation, prior, weight):
+    
+    pf = pfilter.ParticleFilter(initial=prior, 
+                                    observe_fn=observation,
+                                    n_particles=200,                                    
+                                    dynamics_fn=dynamics,
+                                    weight_fn=weight,                    
+                                    resample_proportion=0.1)
+    recogniser = Recogniser(pf)
+   
+    
+    
 class GestureData(object):
     def __init__(self, jsonfile):
         with open(jsonfile, "r") as f:
