@@ -152,7 +152,7 @@ class ParticleFilter(object):
         # invert to hypothesise observations
         self.hypotheses = self.observe_fn(self.particles)             
         
-        if observed is not None:
+        if observed is not None and not np.any(np.isnan(observed)):
             # compute similarity to observations
             # force to be positive                         
             weights = np.clip(np.array(self.weight_fn(self.hypotheses, observed)), 0, np.inf)                   
